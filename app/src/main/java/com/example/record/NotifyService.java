@@ -12,8 +12,7 @@ import java.util.List;
 
 /**
  * 通知监听服务：只监听微信、QQ、小雅的通知
- * - 受 AppStore 开关控制（关闭则不监听、不写日程）
- * - 存最近5条到本地，并按模板写入系统日历
+ *
  */
 public class NotifyService extends NotificationListenerService {
 

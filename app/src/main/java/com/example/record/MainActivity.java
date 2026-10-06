@@ -47,7 +47,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import static com.example.record.NotifyHelper.*;
 
 public class MainActivity extends AppCompatActivity implements NotifyListener {
 
@@ -96,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         refreshUi();
     }
 
-    // ---------------- 权限与界面切换 ----------------
+    //  权限与界面切换 
 
     /**
      * 根据通知监听权限状态切换界面
@@ -190,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         return packageNames.contains(getPackageName());
     }
 
-    // ---------------- 模块构建 ----------------
+    //  模块构建 
 
     private void buildModules() {
         moduleContainer.removeAllViews();
@@ -203,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
 
     /**
      * 构建单个模块卡片
-     * 顶部：app图标（可获取才显示）、app名称、启用开关、设置按钮
+     * 顶部：app图标、app名称、启用开关、设置按钮
      * 内部：最近5条消息
      */
     private View buildModuleCard(String appName, String packageName) {
@@ -214,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         card.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // ---- 顶栏 ----
+        // 顶栏
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -222,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         card.addView(header, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // 图标（能获取到才显示）
+        // 图标
         ImageView icon = new ImageView(this);
         Drawable d = loadAppIcon(packageName);
         if (d != null) {
@@ -248,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         });
         header.addView(sw);
 
-        // 设置按钮（日程格式模板）——紧凑图标按钮
+        // 设置按钮
         ImageButton btnSettings = new ImageButton(this);
         btnSettings.setImageResource(R.drawable.ic_settings);
         TypedValue tv = new TypedValue();
@@ -259,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         btnSettings.setOnClickListener(v -> showTemplateDialog(packageName));
         header.addView(btnSettings, new LinearLayout.LayoutParams(dp(40), dp(40)));
 
-        // ---- 消息列表区 ----
+        // 消息列表区
         TextView msgTv = new TextView(this);
         msgTv.setTextSize(14);
         msgTv.setPadding(0, dp(8), 0, 0);
@@ -287,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         return Math.round(getResources().getDisplayMetrics().density * value);
     }
 
-    // ---------------- 消息刷新 ----------------
+    // 消息刷新 
 
     private void refreshAllMessages() {
         for (String packageName : messageViews.keySet()) {
@@ -319,10 +318,10 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         tv.setText(sb.toString());
     }
 
-    // ---------------- 日程格式模板设置 ----------------
+    //  日程格式模板设置 
 
     /**
-     * 设置弹窗：日程提醒设置 + 通知文本提取规则（模板）
+     * 设置弹窗：日程提醒设置 + 通知文本提取模板
      */
     private void showTemplateDialog(String packageName) {
         View content = getLayoutInflater().inflate(R.layout.dialog_settings, null);
@@ -339,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         rgRemind.check(AppStore.REMIND_ALERT.equals(remindMode) ? R.id.rb_alert : R.id.rb_none);
         etHours.setText(String.valueOf(remindHours));
 
-        // 无提醒时隐藏"提前提醒"输入
+        // 无提醒时隐藏输入
         rgRemind.setOnCheckedChangeListener((group, checkedId) ->
                 tilHours.setVisibility(checkedId == R.id.rb_alert ? View.VISIBLE : View.GONE));
         tilHours.setVisibility(remindMode.equals(AppStore.REMIND_ALERT) ? View.VISIBLE : View.GONE);
@@ -404,7 +403,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         showMsg("已保存");
     }
 
-    // ---------------- 通知回调 ----------------
+    //  通知回调 
 
     @Override
     public void onReceiveMessage(int type) {

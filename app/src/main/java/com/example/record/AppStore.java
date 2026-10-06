@@ -41,7 +41,7 @@ public class AppStore {
         return instance;
     }
 
-    // ---------- 日程提醒设置 ----------
+    //  日程提醒设置 
 
     public String getRemindMode(String packageName) {
         return sp.getString("remind_mode_" + packageName, REMIND_NONE);
@@ -59,7 +59,7 @@ public class AppStore {
         sp.edit().putInt("remind_hours_" + packageName, hours).apply();
     }
 
-    // ---------- 模块开关 ----------
+    //  模块开关 
 
     public boolean isEnabled(String packageName) {
         // 默认全部启用
@@ -70,7 +70,7 @@ public class AppStore {
         sp.edit().putBoolean("enabled_" + packageName, enabled).apply();
     }
 
-    // ---------- 日程格式模板 ----------
+    //  日程格式模板 
 
     public List<String> getTemplates(String packageName) {
         List<String> list = new ArrayList<>();
@@ -100,7 +100,7 @@ public class AppStore {
         sp.edit().putString("templates_" + packageName, arr.toString()).apply();
     }
 
-    // ---------- 最近消息 ----------
+    //  最近消息 
 
     public List<NotifyMessage> getMessages(String packageName) {
         List<NotifyMessage> list = new ArrayList<>();
