@@ -34,7 +34,7 @@ public class NotifyService extends NotificationListenerService {
 
     public static final String QQ = "com.tencent.mobileqq";//qq信息
     public static final String WX = "com.tencent.mm";//微信信息
-    public static final String XIAOYA = "com.ccnu.jc.xiaoya";//小雅
+    public static final String XIAOYA = "com.ccnu.jx.xiaoya";//小雅
 
     /**
      * 是否为需要监听的应用
@@ -112,7 +112,9 @@ public class NotifyService extends NotificationListenerService {
         AppStore store = AppStore.getInstance(this);
         if (!store.isEnabled(msg.packageName)) return;
         List<String> templates = store.getTemplates(msg.packageName);
-        CalendarHelper.writeSchedules(this, msg, templates);
+        String remindMode = store.getRemindMode(msg.packageName);
+        int remindHours = store.getRemindHours(msg.packageName);
+        CalendarHelper.writeSchedules(this, msg, templates, remindMode, remindHours);
     }
 
     /**

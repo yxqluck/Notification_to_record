@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">record</string>
+    <string name="settings_rule_hint">{时间}作为开始时间，{内容}作为标题\n可同时配置多个规则\n\n例：你好{内容}，{时间}\n当通知文本中包含：你好lucky，2026/10/06 23:59等类似的时间格式时\n\n提取的内容为lucky，提取的时间为2026/10/06 23:59</string>
+    <string name="settings_rule_example">例如：你好{内容}，{时间}</string>
 </resources>

@@ -7,15 +7,19 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
+import android.text.InputType;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.Space;
 import android.widget.Switch;
@@ -24,7 +28,6 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -32,6 +35,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -242,14 +248,16 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         });
         header.addView(sw);
 
-        // 设置按钮（日程格式模板）
-        Button btnSettings = new Button(this);
-        btnSettings.setText("设置");
-        btnSettings.setAllCaps(false);
+        // 设置按钮（日程格式模板）——紧凑图标按钮
+        ImageButton btnSettings = new ImageButton(this);
+        btnSettings.setImageResource(R.drawable.ic_settings);
+        TypedValue tv = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, tv, true)) {
+            btnSettings.setBackgroundResource(tv.resourceId);
+        }
+        btnSettings.setContentDescription("设置");
         btnSettings.setOnClickListener(v -> showTemplateDialog(packageName));
-        header.addView(btnSettings);
-        // 固定按钮宽度，避免因文字宽度影响布局
-        btnSettings.setMinWidth(dp(48));
+        header.addView(btnSettings, new LinearLayout.LayoutParams(dp(40), dp(40)));
 
         // ---- 消息列表区 ----
         TextView msgTv = new TextView(this);
@@ -314,37 +322,38 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
     // ---------------- 日程格式模板设置 ----------------
 
     /**
-     * 模板设置弹窗：可添加多个、可删除，每条模板对应一条日程
-     * 占位符：{app}{time}{content}{title}{package}
+     * 设置弹窗：日程提醒设置 + 通知文本提取规则（模板）
      */
     private void showTemplateDialog(String packageName) {
-        List<String> templates = store.getTemplates(packageName);
+        View content = getLayoutInflater().inflate(R.layout.dialog_settings, null);
 
-        LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(dp(16), dp(8), dp(16), dp(8));
+        RadioGroup rgRemind = content.findViewById(R.id.rg_remind);
+        EditText etHours = content.findViewById(R.id.et_hours);
+        View tilHours = content.findViewById(R.id.til_hours);
+        LinearLayout templateArea = content.findViewById(R.id.template_area);
+        MaterialButton btnAdd = content.findViewById(R.id.btn_add_template);
 
-        // 提示文字
-        TextView hint = new TextView(this);
-        hint.setText("填写通知文本提取规则，{时间}提取为日程开始时间，{内容}提取为日程标题。\n例：记录了一条{内容}记录，截止时间：{时间}\n从「...截止时间：2026-10-10 23:59」中提取 → 时间=2026-10-10 23:59，内容=作业待完成。未匹配则跳过不写入。");
-        hint.setTextSize(12);
-        hint.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
-        container.addView(hint);
+        String remindMode = store.getRemindMode(packageName);
+        int remindHours = store.getRemindHours(packageName);
 
-        for (String t : templates) {
-            container.addView(createTemplateRow(container, t));
+        rgRemind.check(AppStore.REMIND_ALERT.equals(remindMode) ? R.id.rb_alert : R.id.rb_none);
+        etHours.setText(String.valueOf(remindHours));
+
+        // 无提醒时隐藏"提前提醒"输入
+        rgRemind.setOnCheckedChangeListener((group, checkedId) ->
+                tilHours.setVisibility(checkedId == R.id.rb_alert ? View.VISIBLE : View.GONE));
+        tilHours.setVisibility(remindMode.equals(AppStore.REMIND_ALERT) ? View.VISIBLE : View.GONE);
+
+        for (String t : store.getTemplates(packageName)) {
+            templateArea.addView(createTemplateRow(t));
         }
+        btnAdd.setOnClickListener(v -> templateArea.addView(createTemplateRow("")));
 
-        Button btnAdd = new Button(this);
-        btnAdd.setText("添加模板");
-        btnAdd.setAllCaps(false);
-        btnAdd.setOnClickListener(v -> container.addView(createTemplateRow(container, ""), container.getChildCount()));
-        container.addView(btnAdd);
-
-        new AlertDialog.Builder(this)
-                .setTitle("日程格式设置")
-                .setView(container)
-                .setPositiveButton("保存", (dialog, which) -> saveTemplates(packageName, container))
+        new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_App_SettingsDialog)
+                .setTitle("设置")
+                .setView(content)
+                .setPositiveButton("保存", (dialog, which) ->
+                        saveTemplateSettings(packageName, rgRemind, etHours, templateArea))
                 .setNegativeButton("取消", null)
                 .show();
     }
@@ -352,45 +361,47 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
     /**
      * 单个模板编辑行：输入框 + 删除按钮
      */
-    private View createTemplateRow(LinearLayout container, String text) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(6), 0, dp(6));
-
-        EditText et = new EditText(this);
+    private View createTemplateRow(String text) {
+        View row = getLayoutInflater().inflate(R.layout.item_template_row, null);
+        EditText et = row.findViewById(R.id.et_template);
         et.setText(text);
-        et.setSingleLine(true);
-        et.setHint("例如：记录了一条{内容}记录，截止时间：{时间}");
-        LinearLayout.LayoutParams etParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        row.addView(et, etParams);
-
-        Button btnDel = new Button(this);
-        btnDel.setText("删除");
-        btnDel.setAllCaps(false);
-        btnDel.setOnClickListener(v -> container.removeView(row));
-        row.addView(btnDel);
+        row.findViewById(R.id.btn_del_template)
+                .setOnClickListener(v -> ((ViewGroup) row.getParent()).removeView(row));
         return row;
     }
 
-    private void saveTemplates(String packageName, LinearLayout container) {
+    /**
+     * 保存模板与提醒设置
+     */
+    private void saveTemplateSettings(String packageName, RadioGroup rgRemind,
+                                      EditText etHours, LinearLayout templateArea) {
         java.util.ArrayList<String> list = new java.util.ArrayList<>();
-        for (int i = 1; i < container.getChildCount(); i++) {
-            View v = container.getChildAt(i);
-            if (v instanceof LinearLayout) {
-                LinearLayout row = (LinearLayout) v;
-                for (int j = 0; j < row.getChildCount(); j++) {
-                    View child = row.getChildAt(j);
-                    if (child instanceof EditText) {
-                        String t = ((EditText) child).getText().toString().trim();
-                        if (!t.isEmpty()) list.add(t);
-                        break;
-                    }
-                }
+        for (int i = 0; i < templateArea.getChildCount(); i++) {
+            View row = templateArea.getChildAt(i);
+            EditText et = row.findViewById(R.id.et_template);
+            if (et != null) {
+                String t = et.getText().toString().trim();
+                if (!t.isEmpty()) list.add(t);
             }
         }
         store.saveTemplates(packageName, list);
-        showMsg("日程格式已保存");
+
+        // 提醒方式：无提醒 / 通知提醒
+        store.setRemindMode(packageName,
+                rgRemind.getCheckedRadioButtonId() == R.id.rb_alert
+                        ? AppStore.REMIND_ALERT : AppStore.REMIND_NONE);
+
+        // 提前小时（正整数，非法输入回退为 1）
+        int hours;
+        try {
+            hours = Integer.parseInt(etHours.getText().toString().trim());
+            if (hours <= 0) hours = 1;
+        } catch (NumberFormatException e) {
+            hours = 1;
+        }
+        store.setRemindHours(packageName, hours);
+
+        showMsg("已保存");
     }
 
     // ---------------- 通知回调 ----------------

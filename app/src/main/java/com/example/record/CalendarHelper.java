@@ -1,6 +1,7 @@
 package com.example.record;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -19,7 +20,7 @@ import java.util.TimeZone;
 public class CalendarHelper {
 
     /** 日程默认时长（毫秒） */
-    private static final long DEFAULT_DURATION = 60 * 60 * 1000L;
+    private static final long DEFAULT_DURATION = 60 * 1000L;
 
     /** 是否已授予日历读写权限 */
     public static boolean hasCalendarPermission(Context context) {
@@ -28,13 +29,16 @@ public class CalendarHelper {
     }
 
     /**
-     * 将一条通知按模板列表写入日程。
+     * 将一条通知按模板列表写入日程，并按提醒设置添加提醒。
      * 模板为提取规则：从通知文本中提取 {时间} 作为日程开始时间、{内容} 作为标题；
      * 无法提取（未命中）的模板跳过不写入。多个模板命中则各写一条日程。
      *
+     * @param remindMode  提醒方式：REMIND_NONE（无提醒）/ REMIND_ALERT（通知提醒）
+     * @param remindHours 提前多少小时提醒（remindMode 为 NONE 时忽略）
      * @return 成功写入的条数
      */
-    public static int writeSchedules(Context context, NotifyMessage msg, List<String> templates) {
+    public static int writeSchedules(Context context, NotifyMessage msg, List<String> templates,
+                                     String remindMode, int remindHours) {
         if (msg == null || templates == null || templates.isEmpty() || !hasCalendarPermission(context)) {
             return 0;
         }
@@ -58,9 +62,25 @@ public class CalendarHelper {
             v.put(CalendarContract.Events.TITLE, r.content);
             v.put(CalendarContract.Events.DESCRIPTION, text);
             Uri uri = context.getContentResolver().insert(CalendarContract.Events.CONTENT_URI, v);
-            if (uri != null) count++;
+            if (uri != null) {
+                addReminder(context, ContentUris.parseId(uri), remindMode, remindHours);
+                count++;
+            }
         }
         return count;
+    }
+
+    /**
+     * 为日程添加提醒（通知提醒）
+     */
+    public static void addReminder(Context context, long eventId, String remindMode, int remindHours) {
+        if (eventId < 0 || AppStore.REMIND_NONE.equals(remindMode)) return;
+
+        ContentValues remindVals = new ContentValues();
+        remindVals.put(CalendarContract.Reminders.EVENT_ID, eventId);
+        remindVals.put(CalendarContract.Reminders.MINUTES, (long) remindHours * 60); // 提前 N 小时
+        remindVals.put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT); // 通知提醒
+        context.getContentResolver().insert(CalendarContract.Reminders.CONTENT_URI, remindVals);
     }
 
     private static String safe(String s) {

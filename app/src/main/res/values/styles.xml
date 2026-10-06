@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="TextAppearance.App.InputSmall" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="TextAppearance.App.HintSmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="TextAppearance.App.SuffixSmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textSize">15sp</item>
+    </style>
+
+</resources>

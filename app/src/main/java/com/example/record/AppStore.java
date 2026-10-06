@@ -14,12 +14,18 @@ import java.util.List;
  * 本地存储：基于 SharedPreferences + JSON
  * - 模块启用开关（按包名）
  * - 日程格式模板列表（按包名，可多条）
+ * - 日程提醒设置（按包名：方式 + 提前小时）
  * - 最近 N 条通知消息（按包名）
  */
 public class AppStore {
 
+    // 提醒方式
+    public static final String REMIND_NONE = "none";      // 无提醒
+    public static final String REMIND_ALERT = "alert";    // 通知提醒
+
     private static final String PREFS_NAME = "app_store";
     private static final int MAX_MESSAGES = 5;
+    private static final int DEFAULT_REMIND_HOURS = 1;
 
     private static AppStore instance;
     private final SharedPreferences sp;
@@ -33,6 +39,24 @@ public class AppStore {
             instance = new AppStore(context);
         }
         return instance;
+    }
+
+    // ---------- 日程提醒设置 ----------
+
+    public String getRemindMode(String packageName) {
+        return sp.getString("remind_mode_" + packageName, REMIND_NONE);
+    }
+
+    public void setRemindMode(String packageName, String mode) {
+        sp.edit().putString("remind_mode_" + packageName, mode).apply();
+    }
+
+    public int getRemindHours(String packageName) {
+        return sp.getInt("remind_hours_" + packageName, DEFAULT_REMIND_HOURS);
+    }
+
+    public void setRemindHours(String packageName, int hours) {
+        sp.edit().putInt("remind_hours_" + packageName, hours).apply();
     }
 
     // ---------- 模块开关 ----------
