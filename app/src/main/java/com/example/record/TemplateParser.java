@@ -22,9 +22,9 @@ public class TemplateParser {
         public String content;  // 提取到的内容
     }
 
-    /** {时间} 匹配：完整日期时间 | 时分 */
+    /** {时间} 匹配：完整日期时间（冒号或中文时/分/秒） | 时分 */
     private static final String TIME_GROUP =
-            "(?<time>(?:19|20)\\d{2}[-/.年]\\d{1,2}[-/.月]\\d{1,2}日?(?:[ T]\\d{1,2}:\\d{2}(?::\\d{2})?)?|\\d{1,2}:\\d{2}(?::\\d{2})?)";
+            "(?<time>(?:19|20)\\d{2}[-/.年]\\d{1,2}[-/.月]\\d{1,2}日?(?:\\d{1,2}时\\d{1,2}分(?:\\d{1,2}秒)?|[ T]\\d{1,2}:\\d{2}(?::\\d{2})?)?|\\d{1,2}:\\d{2}(?::\\d{2})?)";
     /** {内容} 匹配：非贪婪任意字符 */
     private static final String CONTENT_GROUP = "(?<content>[\\s\\S]+?)";
 
@@ -32,7 +32,8 @@ public class TemplateParser {
             "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd",
             "yyyy/MM/dd HH:mm:ss", "yyyy/MM/dd HH:mm", "yyyy/MM/dd",
             "yyyy.MM.dd HH:mm:ss", "yyyy.MM.dd HH:mm", "yyyy.MM.dd",
-            "yyyy年M月d日 HH:mm:ss", "yyyy年M月d日 HH:mm", "yyyy年M月d日"
+            "yyyy年M月d日 HH:mm:ss", "yyyy年M月d日 HH:mm", "yyyy年M月d日",
+            "yyyy年M月d日HH时mm分ss秒", "yyyy年M月d日HH时mm分"
     };
 
     /**
